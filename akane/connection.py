@@ -61,10 +61,10 @@ class Connection(object):
 
         response = self._reader.gets()
         if response is not False:
-            if self._callback is not None:
-                self._busy = False
-                cb = self._callback
-                self._callback = None
+            self._busy = False
+            cb = self._callback
+            self._callback = None
+            if cb is not None:
                 cb(response)
             return
 
@@ -76,23 +76,12 @@ class Pool(object):
 
     closed = True
 
-    def __init__(self, min_conn=1, max_conn=20, cleanup_timeout=10,
-                 ioloop=None, *args, **kwargs):
-        self.min_conn = min_conn
-        self.max_conn = max_conn
+    def __init__(self, connections=1, *args, **kwargs):
         self.closed = False
-        self._ioloop = ioloop or IOLoop.instance()
-        self._args = args
-        self._kwargs = kwargs
-
         self._pool = set()
 
-        self.closed = False
-        for i in range(self.min_conn):
-            self._new_conn()
-
-    def _new_conn(self):
-        self._pool.add(Connection(*self._args, **self._kwargs))
+        for i in range(connections):
+            self._pool.add(Connection(*args, **kwargs))
 
     def get_free_conn(self):
         if self.closed:
@@ -100,7 +89,7 @@ class Pool(object):
         for conn in self._pool:
             if not conn.busy():
                 return conn
-        return None
+        raise PoolError('connection pool exhausted')
 
     def close(self):
         if self.closed:
@@ -108,6 +97,5 @@ class Pool(object):
         for conn in self._pool:
             if not conn.closed():
                 conn.close()
-        self._cleaner.stop()
         self._pool = set()
         self.closed = True
