@@ -5,7 +5,7 @@
     All functionality regarding sending and receiving data to redis.
 """
 
-
+import sys
 import socket
 
 from tornado.ioloop import IOLoop
@@ -14,6 +14,14 @@ from tornado import iostream
 import hiredis
 
 from .exceptions import PoolError
+
+
+if sys.version_info[0] < 3:
+    string_type = unicode
+    DELIMITER = '\r\n'
+else:
+    string_type = str
+    DELIMITER = b'\r\n'
 
 
 class Connection(object):
@@ -45,19 +53,24 @@ class Connection(object):
     def send_command(self, callback, *args):
         parts = []
         for arg in args:
-            if isinstance(arg, unicode):
-                arg = arg.encode('utf-8', 'strict')
-            parts.append('$%s\r\n%s\r\n' % (len(arg), arg))
+            if isinstance(arg, string_type):
+                arg_b = arg.encode('utf-8', 'strict')
+            else:
+                arg_b = arg
+            parts.append('$%s\r\n%s\r\n' % (len(arg_b), arg))
 
         command = '*%s\r\n%s' % (len(parts), ''.join(parts))
+        if isinstance(command, string_type):
+            command = command.encode('utf-8', 'strict')
 
         self._busy = True
         self._callback = callback
         self._stream.write(command)
-        self._stream.read_until('\r\n', self._handle_read)
+        self._stream.read_until(DELIMITER, self._handle_read)
 
     def _handle_read(self, data):
         self._reader.feed(data)
+        # print('%r' % data)
 
         response = self._reader.gets()
         if response is not False:
@@ -68,7 +81,7 @@ class Connection(object):
                 cb(response)
             return
 
-        self._stream.read_until('\r\n', self._handle_read)
+        self._stream.read_until(DELIMITER, self._handle_read)
 
 
 

@@ -33,9 +33,11 @@ class OverviewHandler(BaseHandler):
         # ]
         # for d in data:
         #     self.write('%r<br>' % d)
+
         data = yield gen.Task(self.db.set, 'k_1', '1')
-        # self.db.set('k_1', '1')
-        # data = 'OK'
+        # data = yield gen.Task(self.db.mset, {'k_2': '22', 'k_3': '33'})
+        # data = yield gen.Task(self.db.mget, ('k_2', 'k_3'))
+
         self.write('%r<br>' % data)
         self.finish()
 
