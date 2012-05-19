@@ -69,7 +69,7 @@ static void itoa(int n, char s[])
 
 
 static PyObject *
-py_redis_cmd(PyObject *self, PyObject *args)
+py_redis_request(PyObject *self, PyObject *args)
 {
     PyObject * parts;
     if (!PyArg_ParseTuple(args, "O!", &PyTuple_Type, &parts))
@@ -82,9 +82,9 @@ py_redis_cmd(PyObject *self, PyObject *args)
     struct buf *ob;
     ob = bufnew(64);
 
-    bufput(ob, "*", 1);
+    bufputc(ob, '*');
     BUFPUTI(ob, parts_length);
-    bufput(ob, "\r\n", 2);
+    BUFPUTSL(ob, "\r\n");
 
     int i; for (i = 0;i < parts_length;i++) {
         part = PyTuple_GET_ITEM(parts, i);
@@ -92,11 +92,11 @@ py_redis_cmd(PyObject *self, PyObject *args)
             part = PyUnicode_AsEncodedString(part, "utf-8", "strict");
         part_size = (int) PyBytes_GET_SIZE(part);
 
-        bufput(ob, "$", 1);
+        bufputc(ob, '$');
         BUFPUTI(ob, part_size);
-        bufput(ob, "\r\n", 2);
+        BUFPUTSL(ob, "\r\n");
         bufput(ob, PyBytes_AS_STRING(part), part_size);
-        bufput(ob, "\r\n", 2);
+        BUFPUTSL(ob, "\r\n");
     }
 
     PyObject *new_string = PyBytes_FromStringAndSize(ob->data, ob->size);
@@ -106,9 +106,8 @@ py_redis_cmd(PyObject *self, PyObject *args)
 }
 
 
-
 static PyMethodDef utils_methods[] = {
-    {"redis_cmd", py_redis_cmd, METH_VARARGS, "Create a Redis command."},
+    {"redis_request", py_redis_request, METH_VARARGS, "Create a Redis request."},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 

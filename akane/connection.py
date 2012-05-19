@@ -51,7 +51,7 @@ class Connection(object):
     def closed(self):
         self._stream.closed()
 
-    def send_command(self, callback, *args):
+    def send_request(self, callback, *args):
         # parts = []
         # for arg in args:
         #     if isinstance(arg, string_type):
@@ -60,13 +60,13 @@ class Connection(object):
         #         arg_b = arg
         #     parts.append('$%s\r\n%s\r\n' % (len(arg_b), arg))
 
-        # command = '*%s\r\n%s' % (len(parts), ''.join(parts))
-        # if isinstance(command, string_type):
-        #     command = command.encode('utf-8', 'strict')
+        # request = '*%s\r\n%s' % (len(parts), ''.join(parts))
+        # if isinstance(request, string_type):
+        #     request = request.encode('utf-8', 'strict')
 
         self._busy = True
         self._callback = callback
-        self._stream.write(redis_cmd(args))
+        self._stream.write(redis_request(args))
         self._stream.read_until(DELIMITER, self._handle_read)
 
     def _handle_read(self, data):
