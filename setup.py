@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 try:
-    from setuptools import setup, Extension, Command
+    from setuptools import setup, Extension
 except ImportError:
-    from distutils.core import setup, Extension, Command
+    from distutils.core import setup, Extension
 
 
 setup(
@@ -19,10 +19,15 @@ setup(
         'tornado',
         'hiredis'
     ],
+    ext_modules=[Extension('akane.utils', [
+        'akane/utils.c',
+        'akane/buffer.c'
+    ])],
     classifiers = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
+        'Programming Language :: C',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.2',
         'Topic :: Database',

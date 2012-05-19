@@ -14,6 +14,7 @@ from tornado import iostream
 import hiredis
 
 from .exceptions import PoolError
+from .utils import redis_cmd
 
 
 if sys.version_info[0] < 3:
@@ -51,21 +52,21 @@ class Connection(object):
         self._stream.closed()
 
     def send_command(self, callback, *args):
-        parts = []
-        for arg in args:
-            if isinstance(arg, string_type):
-                arg_b = arg.encode('utf-8', 'strict')
-            else:
-                arg_b = arg
-            parts.append('$%s\r\n%s\r\n' % (len(arg_b), arg))
+        # parts = []
+        # for arg in args:
+        #     if isinstance(arg, string_type):
+        #         arg_b = arg.encode('utf-8', 'strict')
+        #     else:
+        #         arg_b = arg
+        #     parts.append('$%s\r\n%s\r\n' % (len(arg_b), arg))
 
-        command = '*%s\r\n%s' % (len(parts), ''.join(parts))
-        if isinstance(command, string_type):
-            command = command.encode('utf-8', 'strict')
+        # command = '*%s\r\n%s' % (len(parts), ''.join(parts))
+        # if isinstance(command, string_type):
+        #     command = command.encode('utf-8', 'strict')
 
         self._busy = True
         self._callback = callback
-        self._stream.write(command)
+        self._stream.write(redis_cmd(args))
         self._stream.read_until(DELIMITER, self._handle_read)
 
     def _handle_read(self, data):
