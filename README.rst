@@ -14,9 +14,9 @@ that doesn't make sense. :D
 License
 -------
 
-Akane is licensed under the MIT license. `akane/buffer.c` is from Sundown.
-`akane/utils.c` contains a function, `intlen`, from Hiredis. That function
-is under the BSD license. `reverse` and `itoa` are from K&R.
+Akane is licensed under the MIT license. ``akane/buffer.c`` is from Sundown.
+``akane/utils.c`` contains a function, ``intlen``, from Hiredis. That function
+is under the BSD license. ``reverse`` and ``itoa`` are from K&R.
 
 
 Installation

@@ -88,8 +88,11 @@ py_redis_request(PyObject *self, PyObject *args)
 
     int i; for (i = 0;i < parts_length;i++) {
         part = PyTuple_GET_ITEM(parts, i);
-        if (PyUnicode_Check(part))
+        int is_unicode = PyUnicode_Check(part);
+        if (is_unicode) {
+            Py_INCREF(part);
             part = PyUnicode_AsEncodedString(part, "utf-8", "strict");
+        }
         part_size = (int) PyBytes_GET_SIZE(part);
 
         bufputc(ob, '$');
@@ -97,9 +100,14 @@ py_redis_request(PyObject *self, PyObject *args)
         BUFPUTSL(ob, "\r\n");
         bufput(ob, PyBytes_AS_STRING(part), part_size);
         BUFPUTSL(ob, "\r\n");
+
+        if (is_unicode) {
+            Py_DECREF(part);
+        }
     }
 
     PyObject *new_string = PyBytes_FromStringAndSize(ob->data, ob->size);
+    Py_INCREF(new_string);
     bufrelease(ob);
 
     return new_string;

@@ -14,7 +14,7 @@ from tornado import iostream
 import hiredis
 
 from .exceptions import PoolError
-from .utils import redis_cmd
+from .utils import redis_request
 
 
 if sys.version_info[0] < 3:
