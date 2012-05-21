@@ -52,7 +52,10 @@ class ReplyParser(object):
             if self._mb_count > 0:
                 self._buffer.append(reply)
                 self._mb_count -= 1
-                self._read_next = True
+                if self._mb_count == 0:
+                    self._read_next = False
+                else:
+                    self._read_next = True
             else:
                 self._buffer = reply
                 self._read_next = False
