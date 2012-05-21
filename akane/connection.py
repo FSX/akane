@@ -104,11 +104,12 @@ class Connection(object):
     _callback = None
 
     def __init__(self, host='localhost', port=6379,
-                 encoding='utf-8', encoding_errors='strict'):
+                 encoding='utf-8', encoding_errors='strict', ioloop=None):
         self.host = host
         self.port = port
         self.encoding = encoding
         self.encoding_errors = encoding_errors
+        self._ioloop = ioloop or IOLoop.instance()
 
         # self._reader = hiredis.Reader()
         self._parser = ReplyParser()
@@ -116,7 +117,7 @@ class Connection(object):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         s.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
 
-        self._stream = iostream.IOStream(s)
+        self._stream = iostream.IOStream(s,self._ioloop)
         self._stream.connect((host, port))
 
     def busy(self):
