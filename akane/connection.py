@@ -38,7 +38,7 @@ class ReplyParser(object):
 
         if t == '*':
             d = int(data[1:-2])
-            if d != '-1':
+            if d != -1:
                 self._read_next = True
                 self._mb_count = d
             else:
@@ -61,7 +61,7 @@ class ReplyParser(object):
                 self._read_next = False
         elif t == '$':
             d = int(data[1:-2])
-            if d != '-1':
+            if d != -1:
                 self._read_next = d + 2
                 self._continue_bulk = True
             else:
@@ -147,6 +147,8 @@ class Connection(object):
     def _handle_read(self, data):
         # self._reader.feed(data)
         self._parser.feed(data)
+
+        # raise Exception('Testing!')
 
         next = self._parser.read_next()
         if next is True:
