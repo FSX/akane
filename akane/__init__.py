@@ -16,4 +16,4 @@ __license__ = 'MIT'
 
 from .client import Client
 from .connection import Pool
-from .exceptions import PoolError
+from .exceptions import PoolError, ReplyError

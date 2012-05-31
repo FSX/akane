@@ -13,7 +13,7 @@ from tornado import iostream
 
 import hiredis
 
-from .exceptions import PoolError
+from .exceptions import PoolError, ReplyError
 from .utils import redis_request
 
 
@@ -23,7 +23,6 @@ if sys.version_info[0] < 3:
 else:
     string_type = str
     DELIMITER = b'\r\n'
-
 
 
 class ReplyParser(object):
@@ -59,6 +58,9 @@ class ReplyParser(object):
             else:
                 self._buffer = reply
                 self._read_next = False
+        elif t == '-':
+            if data.startswith('-ERR '):
+                self._buffer = ReplyError(data[5:-2])
         elif t == '$':
             d = int(data[1:-2])
             if d != -1:
@@ -147,6 +149,8 @@ class Connection(object):
     def _handle_read(self, data):
         # self._reader.feed(data)
         self._parser.feed(data)
+
+        # print 'DATA: %r' % data
 
         # raise Exception('Testing!')
 
