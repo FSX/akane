@@ -27,19 +27,19 @@ class ReplyParser(object):
     def __init__(self):
         self._mb_count = 0
         self._buffer = False # False means empty
-        self._read_next = False
         self._continue_bulk = False
 
     def feed(self, data):
         t = data[0]
+        read_next = False
 
         if t == '*':
             d = int(data[1:-2])
             if d != -1:
-                self._read_next = True
+                read_next = True
                 self._mb_count = d
             else:
-                self._read_next = False
+                read_next = False
                 self._buffer = None
         elif t in '+:':
             reply = data[1:-2]
@@ -50,19 +50,19 @@ class ReplyParser(object):
                 self._buffer.append(reply)
                 self._mb_count -= 1
                 if self._mb_count == 0:
-                    self._read_next = False
+                    read_next = False
                 else:
-                    self._read_next = True
+                    read_next = True
             else:
                 self._buffer = reply
-                self._read_next = False
+                read_next = False
         elif t == '-':
             if data.startswith('-ERR '):
                 self._buffer = ReplyError(data[5:-2])
         elif t == '$':
             d = int(data[1:-2])
             if d != -1:
-                self._read_next = d + 2
+                read_next = d + 2
                 self._continue_bulk = True
             else:
                 reply = None
@@ -70,23 +70,22 @@ class ReplyParser(object):
                 if self._mb_count > 0:
                     self._buffer.append(reply)
                     self._mb_count -= 1
-                    self._read_next = True
+                    read_next = True
                 else:
                     self._buffer = reply
-                    self._read_next = False
+                    read_next = False
         elif self._continue_bulk is True:
             reply = data[:-2]
             self._continue_bulk = False
             if self._mb_count > 0:
                 self._buffer.append(reply)
                 self._mb_count -= 1
-                self._read_next = True
+                read_next = True
             else:
                 self._buffer = reply
-                self._read_next = False
+                read_next = False
 
-    def read_next(self):
-        return self._read_next
+        return read_next
 
     def gets(self):
         if self._buffer is False:
@@ -132,9 +131,8 @@ class Connection(object):
         self._stream.read_until(DELIMITER, self._handle_read)
 
     def _handle_read(self, data):
-        self._parser.feed(data)
+        next = self._parser.feed(data)
 
-        next = self._parser.read_next()
         if next is True:
             self._stream.read_until(DELIMITER, self._handle_read)
         elif next > 0:
