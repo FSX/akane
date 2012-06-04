@@ -119,7 +119,7 @@ class Connection(object):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         s.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
 
-        self._stream = iostream.IOStream(s,self._ioloop)
+        self._stream = iostream.IOStream(s, self._ioloop)
         self._stream.connect((host, port))
 
     def busy(self):
