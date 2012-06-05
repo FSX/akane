@@ -11,6 +11,21 @@ that doesn't make sense. :D
 .. _Tornado: http://www.tornadoweb.org/
 
 
+Roadmap
+-------
+
+* C-based reply parser. (in progress)
+* Implement commands and unit tests. (in progress)
+* Implement pipelining.
+
+I haven't looked into pub/sub, Lua scripting and transactions, but those will be
+included too. It just needs some more research.
+
+Python 3 will not be supported until I finished the C parts, because there are
+differences between the Python 2 and 3 C-APIs. To avoid a mess with version check
+I'll first support Python 2 and then add support for Python 3.
+
+
 License
 -------
 

@@ -29,7 +29,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: C',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.2',
         'Topic :: Database',
         'Topic :: Database :: Front-Ends'
     ]
