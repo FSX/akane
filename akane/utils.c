@@ -1,5 +1,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "structmember.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +72,7 @@ static void itoa(int n, char s[])
 static PyObject *
 py_redis_request(PyObject *self, PyObject *args)
 {
-    PyObject * parts;
+    PyObject *parts;
     if (!PyArg_ParseTuple(args, "O!", &PyTuple_Type, &parts))
         return NULL;
 
@@ -116,35 +117,99 @@ py_redis_request(PyObject *self, PyObject *args)
 
 typedef struct {
     PyObject_HEAD
-    struct buf *ib;
+    struct buf *ib; // Unused
+    PyObject *data;
     int multi_bulk_parts;
     int read_next; // -1 = don't read; 0 = read next chunk; >0 = read N bytes
 } utils_ReplyParserObject;
 
 
-static PyTypeObject utils_ReplyParserType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                               /*ob_size*/
-    "utils.ReplyParser",             /*tp_name*/
-    sizeof(utils_ReplyParserObject), /*tp_basicsize*/
-    0,                               /*tp_itemsize*/
-    0,                               /*tp_dealloc*/
-    0,                               /*tp_print*/
-    0,                               /*tp_getattr*/
-    0,                               /*tp_setattr*/
-    0,                               /*tp_compare*/
-    0,                               /*tp_repr*/
-    0,                               /*tp_as_number*/
-    0,                               /*tp_as_sequence*/
-    0,                               /*tp_as_mapping*/
-    0,                               /*tp_hash */
-    0,                               /*tp_call*/
-    0,                               /*tp_str*/
-    0,                               /*tp_getattro*/
-    0,                               /*tp_setattro*/
-    0,                               /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,              /*tp_flags*/
-    "Redis reply parser.",            /* tp_doc */
+static void
+utils_ReplyParser_dealloc(utils_ReplyParserObject* self)
+{
+    Py_DECREF(Py_None);
+    self->ob_type->tp_free((PyObject*) self);
+}
+
+
+static PyObject *
+utils_ReplyParser_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    utils_ReplyParserObject *self = (utils_ReplyParserObject *) type->tp_alloc(type, 0);
+    if (!self) {
+        return NULL;
+    }
+
+    return (PyObject *) self;
+}
+
+
+static int
+utils_ReplyParser_init(utils_ReplyParserObject *self, PyObject *args, PyObject *kwds)
+{
+    self->data = Py_None;
+    Py_INCREF(Py_None);
+
+    self->multi_bulk_parts = 0;
+    self->read_next = -1;
+    return 0;
+}
+
+
+static PyObject *
+utils_ReplyParser_feed(utils_ReplyParserObject* self, PyObject *args)
+{
+    unsigned char *text;
+    size_t text_size;
+    if (!PyArg_ParseTuple(args, "s#", &text, &text_size))
+        return NULL;
+
+    char type = *text++; // Pop type character
+    text_size -= 3; // Set correct text size
+    text[text_size] = '\0'; // Chop off \r\n
+    
+
+    switch (type) {
+        case '+':
+            self->data = PyString_FromStringAndSize(text, text_size);
+            self->read_next = -1;
+            break;
+        case '-':
+            break;
+        case ':':
+            self->data = PyInt_FromString(text, NULL, 10); 
+            self->read_next = -1;
+            break;
+        case '$':
+            break;
+        case '*':
+            break;
+        default:
+            self->read_next = -1;
+    }
+    
+    return PyInt_FromLong(self->read_next);
+}
+
+
+static PyObject *
+utils_ReplyParser_gets(utils_ReplyParserObject* self)
+{
+    return self->data;
+}
+
+
+static PyMemberDef utils_ReplyParser_members[] = {
+    {NULL}  /* Sentinel */
+};
+
+
+static PyMethodDef utils_ReplyParser_methods[] = {
+    {"feed", (PyCFunction) utils_ReplyParser_feed, METH_VARARGS,
+        "Feed the reply parser data."},
+    {"gets", (PyCFunction) utils_ReplyParser_gets, METH_NOARGS,
+        "Get the data from the buffer."},
+    {NULL}  /* Sentinel */
 };
 
 
@@ -154,37 +219,49 @@ static PyMethodDef utils_methods[] = {
 };
 
 
-#if PY_MAJOR_VERSION >= 3
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "utils",
-    NULL,
-    -1,
-    utils_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+static PyTypeObject utils_ReplyParserType = {
+    PyObject_HEAD_INIT(&PyType_Type)
+    0, /*ob_size*/
+    "utils.ReplyParser", /*tp_name*/
+    sizeof(utils_ReplyParserObject), /*tp_basicsize*/
+    0, /*tp_itemsize*/
+    (destructor) utils_ReplyParser_dealloc, /*tp_dealloc*/
+    0, /*tp_print*/
+    0, /*tp_getattr*/
+    0, /*tp_setattr*/
+    0, /*tp_compare*/
+    0, /*tp_repr*/
+    0, /*tp_as_number*/
+    0, /*tp_as_sequence*/
+    0, /*tp_as_mapping*/
+    0, /*tp_hash */
+    0, /*tp_call*/
+    0, /*tp_str*/
+    0, /*tp_getattro*/
+    0, /*tp_setattro*/
+    0, /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT, /*tp_flags*/
+    "Redis reply parser.", /* tp_doc */
+    0, /* tp_traverse */
+    0, /* tp_clear */
+    0, /* tp_richcompare */
+    0, /* tp_weaklistoffset */
+    0, /* tp_iter */
+    0, /* tp_iternext */
+    utils_ReplyParser_methods, /* tp_methods */
+    utils_ReplyParser_members, /* tp_members */
+    0, /* tp_getset */
+    0, /* tp_base */
+    0, /* tp_dict */
+    0, /* tp_descr_get */
+    0, /* tp_descr_set */
+    0, /* tp_dictoffset */
+    (initproc) utils_ReplyParser_init, /* tp_init */
+    0, /* tp_alloc */
+    utils_ReplyParser_new, /* tp_new */
 };
 
 
-PyObject *
-PyInit_utils(void)
-{
-    utils_ReplyParserType.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&utils_ReplyParserType) < 0)
-        return NULL;
-
-    PyObject *module = PyModule_Create(&moduledef);
-    if (module == NULL)
-        return NULL;
-
-    Py_INCREF(&utils_ReplyParserType);
-    PyModule_AddObject(module, "ReplyParser", (PyObject *) &utils_ReplyParserType);
-
-    return module;
-}
-#else
 PyMODINIT_FUNC
 initutils(void)
 {
@@ -197,4 +274,3 @@ initutils(void)
     Py_INCREF(&utils_ReplyParserType);
     PyModule_AddObject(module, "ReplyParser", (PyObject *) &utils_ReplyParserType);
 }
-#endif
