@@ -167,7 +167,6 @@ utils_ReplyParser_feed(utils_ReplyParserObject* self, PyObject *args)
     char type = *text++; // Pop type character
     text_size -= 3; // Set correct text size
     text[text_size] = '\0'; // Chop off \r\n
-    
 
     switch (type) {
         case '+':
@@ -177,17 +176,22 @@ utils_ReplyParser_feed(utils_ReplyParserObject* self, PyObject *args)
         case '-':
             break;
         case ':':
-            self->data = PyInt_FromString(text, NULL, 10); 
+            self->data = PyInt_FromString(text, NULL, 10);
             self->read_next = -1;
             break;
         case '$':
+            self->read_next = atoi(text);
             break;
         case '*':
             break;
         default:
+            // There's no type character so it's probably a normal string
+            *text--;
+            text_size++;
+            self->data = PyString_FromStringAndSize(text, text_size);
             self->read_next = -1;
     }
-    
+
     return PyInt_FromLong(self->read_next);
 }
 
@@ -195,6 +199,10 @@ utils_ReplyParser_feed(utils_ReplyParserObject* self, PyObject *args)
 static PyObject *
 utils_ReplyParser_gets(utils_ReplyParserObject* self)
 {
+    if (self->read_next != -1) {
+        Py_RETURN_NONE;
+    }
+
     return self->data;
 }
 
