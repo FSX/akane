@@ -23,80 +23,6 @@ else:
     DELIMITER = b'\r\n'
 
 
-class ReplyParser(object):
-    def __init__(self):
-        self._mb_count = 0
-        self._buffer = False # False means empty
-        self._continue_bulk = False
-
-    def feed(self, data):
-        t = data[0]
-        read_next = False
-
-        if t == '*':
-            d = int(data[1:-2])
-            if d != -1:
-                read_next = True
-                self._mb_count = d
-            else:
-                read_next = False
-                self._buffer = None
-        elif t in '+:':
-            reply = data[1:-2]
-            if t == ':':
-                reply = int(reply)
-
-            if self._mb_count > 0:
-                self._buffer.append(reply)
-                self._mb_count -= 1
-                if self._mb_count == 0:
-                    read_next = False
-                else:
-                    read_next = True
-            else:
-                self._buffer = reply
-                read_next = False
-        elif t == '-':
-            if data.startswith('-ERR '):
-                self._buffer = ReplyError(data[5:-2])
-        elif t == '$':
-            d = int(data[1:-2])
-            if d != -1:
-                read_next = d + 2
-                self._continue_bulk = True
-            else:
-                reply = None
-
-                if self._mb_count > 0:
-                    self._buffer.append(reply)
-                    self._mb_count -= 1
-                    read_next = True
-                else:
-                    self._buffer = reply
-                    read_next = False
-        elif self._continue_bulk is True:
-            reply = data[:-2]
-            self._continue_bulk = False
-            if self._mb_count > 0:
-                self._buffer.append(reply)
-                self._mb_count -= 1
-                read_next = True
-            else:
-                self._buffer = reply
-                read_next = False
-
-        return read_next
-
-    def gets(self):
-        if self._buffer is False:
-            return False
-        try:
-            return self._buffer
-        finally:
-            self._buffer = False
-
-
-
 class Connection(object):
 
     _busy = False
@@ -109,7 +35,7 @@ class Connection(object):
         self.encoding = encoding
         self.encoding_errors = encoding_errors
         self._ioloop = ioloop or IOLoop.instance()
-        self._parser = ReplyParser()
+        self._parser = hiredis.Reader(encoding="utf-8")
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         s.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
@@ -131,19 +57,26 @@ class Connection(object):
         self._stream.read_until(DELIMITER, self._handle_read)
 
     def _handle_read(self, data):
-        next = self._parser.feed(data)
+        self._parser.feed(data)
+
+        parsed_data = self._parser.gets()
+        if parsed_data is False:
+            next  = True
+            if data[0] == '$':
+                next = int(data[1:-2])
+        else:
+            next = False
 
         if next is True:
             self._stream.read_until(DELIMITER, self._handle_read)
         elif next > 0:
             self._stream.read_bytes(next, self._handle_read)
         else: # if next is False
-            data = self._parser.gets()
             self._busy = False
             cb = self._callback
             self._callback = None
             if cb is not None:
-                cb(data)
+                cb(parsed_data)
             return
 
 

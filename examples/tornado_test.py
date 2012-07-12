@@ -21,22 +21,25 @@ class OverviewHandler(BaseHandler):
     @tornado.web.asynchronous
     @gen.engine
     def get(self):
-        # data = yield [
-        #     gen.Task(self.db.set, 'k_1', '1'),
-        #     gen.Task(self.db.set, 'k_2', '55'),
-        #     gen.Task(self.db.get, 'k_1'),
-        #     gen.Task(self.db.getset, 'k_1', '5'),
-        #     gen.Task(self.db.get, 'k_1'),
-        #     gen.Task(self.db.mset, {'k_2': '22', 'k_3': '33'}),
-        #     gen.Task(self.db.get, 'k_2'),
-        #     gen.Task(self.db.mget, ('k_2', 'k_3')),
-        # ]
-        # for d in data:
-        #     self.write('%r<br>' % d)
+        data = yield [
+            gen.Task(self.db.set, 'k_1', '1'),
+            gen.Task(self.db.set, 'k_2', '55'),
+            gen.Task(self.db.get, 'k_1'),
+            gen.Task(self.db.getset, 'k_1', '5'),
+            gen.Task(self.db.get, 'k_1'),
+            gen.Task(self.db.mset, {'k_2': '22', 'k_3': '33'}),
+            gen.Task(self.db.get, 'k_2'),
+            gen.Task(self.db.mget, ('k_2', 'k_3')),
+        ]
+        for d in data:
+            self.write('%r<br>' % d)
 
-        # data = yield gen.Task(self.db.decr, 'k_1')
-        # data = yield gen.Task(self.db.mset, {'k_2': '22', 'k_3': '33'})
-        # data = yield gen.Task(self.db.mget, ('k_2', 'k_3'))
+        data = yield gen.Task(self.db.decr, 'k_1')
+        self.write('%r<br>' % data)
+        data = yield gen.Task(self.db.mset, {'k_2': '22', 'k_3': '33'})
+        self.write('%r<br>' % data)
+        data = yield gen.Task(self.db.mget, ('k_2', 'k_3'))
+        self.write('%r<br>' % data)
 
         d1 = yield gen.Task(self.db.set, 'k_1', '123')
         d2 = yield gen.Task(self.db.get, 'k_1')
