@@ -43,8 +43,20 @@ class OverviewHandler(BaseHandler):
 
         d1 = yield gen.Task(self.db.set, 'k_1', '123')
         d2 = yield gen.Task(self.db.get, 'k_1')
-
         self.write('%r - %r<br>' % (d1, d2))
+
+        self.write('Hashes:<br><br>')
+
+        d1 = yield gen.Task(self.db.hset, 'hash_key', 'hash_field', 'hash_value')
+        d2 = yield gen.Task(self.db.hget, 'hash_key', 'hash_field')
+        self.write('%r - %r<br>' % (d1, d2))
+        d1 = yield gen.Task(self.db.hset, 'hash_key', 'some_field', 'some_value')
+        d2 = yield gen.Task(self.db.hget, 'hash_key', 'some_field')
+        self.write('%r - %r<br>' % (d1, d2))
+
+        data = yield gen.Task(self.db.hgetall, 'hash_key')
+        self.write('%r<br>' % (data,))
+
         self.finish()
 
 

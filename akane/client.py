@@ -81,7 +81,6 @@ class Client(object):
     # Strings
 
     # TODO: APPEND - http://redis.io/commands/append
-
     # TODO: GETRANGE - http://redis.io/commands/getrange
 
     def mget(self, keys, callback=None):
@@ -110,7 +109,6 @@ class Client(object):
         self.send_request(callback, 'INCR', key)
 
     # TODO: MSETNX - http://redis.io/commands/msetnx
-
     # TODO: SETNX - http://redis.io/commands/setnx
 
     def get(self, key, callback=None):
@@ -120,11 +118,8 @@ class Client(object):
         self.send_request(callback, 'INCRBY', key, by)
 
     # TODO: PSETNX - http://redis.io/commands/psetnx
-
     # TODO: SETRANGE - http://redis.io/commands/setrange
-
     # TODO: GETBIT - http://redis.io/commands/getbit
-
     # TODO: INCRBYFLOAT - http://redis.io/commands/incrbyfloat
 
     def set(self, key, value, callback=None):
@@ -133,7 +128,35 @@ class Client(object):
     def strlen(self, key, callback=None):
         self.send_request(callback, 'STRLEN', key)
 
-    # TODO: Hashes
+    # Hashes
+
+    # TODO: HDEL - http://redis.io/commands/hdel
+    # TODO: HINCRBY - http://redis.io/commands/hincrby
+    # TODO: HMGET - http://redis.io/commands/hmget
+    # TODO: HVALS - http://redis.io/commands/hvals
+    # TODO: HEXISTS - http://redis.io/commands/hexists
+    # TODO: HINCRBYFLOAT - http://redis.io/commands/hincrbyfloat
+    # TODO: HMSET - http://redis.io/commands/hmset
+
+    def hset(self, key, field, value, callback=None):
+        self.send_request(callback, 'HSET', key, field, value)
+
+    # TODO: HKEYS - http://redis.io/commands/hkeys
+
+    def hget(self, key, field, callback=None):
+        self.send_request(callback, 'HGET', key, field)
+
+    def hgetall(self, key, callback=None):
+        def wraps(hash_list):
+            hash_dict = {}
+            for i in xrange(0, len(hash_list), 2):
+                hash_dict[hash_list[i]] = hash_list[i+1]
+            callback(hash_dict)
+        self.send_request(wraps, 'HGETALL', key)
+
+    # TODO: HLEN - http://redis.io/commands/hlen
+    # TODO: HSETNX - http://redis.io/commands/hsetnx
+
     # TODO: Lists
     # TODO: Sets
     # TODO: Sorted Sets
