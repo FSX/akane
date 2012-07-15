@@ -6,9 +6,5 @@
 """
 
 
-class ReplyError(Exception):
-	pass
-
-
 class PoolError(Exception):
     pass

@@ -13,7 +13,7 @@ from tornado import iostream
 
 import hiredis
 
-from .exceptions import PoolError, ReplyError
+from .exceptions import PoolError
 from .utils import redis_request
 
 
