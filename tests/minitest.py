@@ -4,24 +4,7 @@
 
     minitest is a really simple unit testing module. Inspired by
     Oktest, http://www.kuwata-lab.com/oktest/
-
-    The code in ``TornadoTestCase`` is taken from ``AsyncTestCase`` in
-    https://github.com/facebook/tornado/blob/master/tornado/testing.py
-
-    Changelog:
-
-     * 0.3:
-        - Handle unexpected exceptions.
-
-     * 0.2:
-        - Use exit code '1' when there are failed tests.
-        - Added ``pre_setup`` and ``post_teardown`` for ``TestCase`` subclasses.
-        - Added a test case class for Tornado, ``TornadoTestCase``.
-
-     * 0.1: Initial version.
 """
-
-VERSION = (0, 2, 0)
 
 import sys
 import time
@@ -122,9 +105,9 @@ class TestCase(object):
             try:
                 func()
                 failure = None
-            except AssertionError as e:
+            except AssertionError as e:  # Failed testcase
                 failure = str(e)
-            except Exception as e:
+            except Exception as e:  # Unexpected exception
                 failure = msg(''.join(
                     traceback.format_exception(*sys.exc_info())).strip())
             return Result(func.__name__, func.__doc__, failure)
@@ -197,12 +180,6 @@ class TornadoTestCase(TestCase):
             self.post_teardown()
 
     def stop(self, _arg=None, **kwargs):
-        """Stops the ioloop, causing one pending (or future) call to wait()
-        to return.
-
-        Keyword arguments or a single positional argument passed to stop() are
-        saved and will be returned by wait().
-        """
         assert _arg is None or not kwargs
         self._stop_args = kwargs or _arg
         if self._running:
@@ -211,13 +188,6 @@ class TornadoTestCase(TestCase):
         self._stopped = True
 
     def wait(self, condition=None, timeout=5):
-        """Runs the IOLoop until stop is called or timeout has passed.
-
-        In the event of a timeout, an exception will be thrown.
-
-        If condition is not None, the IOLoop will be restarted after stop()
-        until condition() returns true.
-        """
         if not self._stopped:
             if timeout:
                 def timeout_func():

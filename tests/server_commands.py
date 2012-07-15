@@ -15,7 +15,6 @@ class ServerCommandsTest(TornadoTestCase):
             'ioloop': self.io_loop
         })
 
-
     def test_get_and_set(self):
         self.db.get('test_get_and_set', callback=self.stop)
         ok(self.wait()) == None
@@ -34,9 +33,9 @@ class ServerCommandsTest(TornadoTestCase):
         ok(self.wait()) == 1
 
     # Command is not supported in Redis 2.4
-    def test_dump(self):
-        self.db.dump('test_dump', callback=self.stop)
-        ok(self.wait()).instance_of(akane.ReplyError)
+    # def test_dump(self):
+    #     self.db.dump('test_dump', callback=self.stop)
+    #     ok(self.wait()).instance_of(akane.ReplyError)
 
 
     def teardown(self):
