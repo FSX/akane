@@ -28,12 +28,9 @@ class Connection(object):
     _busy = False
     _callback = None
 
-    def __init__(self, host='localhost', port=6379,
-                 encoding='utf-8', encoding_errors='strict', ioloop=None):
+    def __init__(self, host='localhost', port=6379, ioloop=None):
         self.host = host
         self.port = port
-        self.encoding = encoding
-        self.encoding_errors = encoding_errors
         self._ioloop = ioloop or IOLoop.instance()
         self._parser = hiredis.Reader(encoding="utf-8")
 
