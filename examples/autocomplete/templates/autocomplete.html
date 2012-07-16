@@ -26,7 +26,7 @@ $.domReady(function () {
           $('#results').text('No results...')
           return;
         }
-        $.v.map(resp, function (obj) {
+        resp.map(function (obj) {
           var el = $.create('<li>').text(obj);
           el.appendTo('#results');
         });
