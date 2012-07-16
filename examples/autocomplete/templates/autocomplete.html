@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+
+{% block content %}
+<p>
+  <input type="text" id="input-text" />
+</p>
+
+<ul id="results">
+</ul>
+
+<script type="text/javascript" src="{{ static_url('ender.min.js') }}"></script>
+<script type="text/javascript">
+$.domReady(function () {
+  $('#input-text').keyup(function (e) {
+    var input_text = $(this).val();
+    $('#results').empty();
+    if (!input_text || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey)
+      return;
+    $.ajax({
+      url: '/autocomplete',
+      method: 'post',
+      data: {input: input_text},
+      success: function (resp) {
+        if (resp.length == 0) {
+          $('#results').text('No results...')
+          return;
+        }
+        $.v.map(resp, function (obj) {
+          var el = $.create('<li>').text(obj);
+          el.appendTo('#results');
+        });
+      }
+    });
+  });
+});
+</script>
+{% end %}
