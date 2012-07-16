@@ -159,7 +159,24 @@ class Client(object):
 
     # TODO: Lists
     # TODO: Sets
-    # TODO: Sorted Sets
+
+    # Sorted Sets
+
+    def zadd(self, key, score_member, callback=None):
+        self.send_request(callback, 'ZADD', key, *score_member)
+
+    def zcard(self, key, callback=None):
+        self.send_request(callback, 'ZCARD', key)
+
+    def zrank(self, key, member, callback=None):
+        self.send_request(callback, 'ZRANK', key, member)
+
+    def zrange(self, key, start, stop, with_scores=False, callback=None):
+        if with_scores:
+            self.send_request(callback, 'ZRANGE', key, start, stop, 'WITHSCORES')
+        else:
+            self.send_request(callback, 'ZRANGE', key, start, stop)
+
     # TODO: Pub/Sub
     # TODO: Transactions
     # TODO: Scripting
