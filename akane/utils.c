@@ -13,7 +13,7 @@
 #define BUFPUTI(output, n) {\
     int n_size = intlen(n);\
     char s[n_size];\
-    itoa(n, s);\
+    itoa(n, s, n_size);\
     bufput(output, s, n_size);\
 }
 
@@ -35,37 +35,25 @@ static int intlen(int i) {
 }
 
 
-// Reverse string in place.
-// From: http://en.wikibooks.org/wiki/C_Programming/C_Reference/stdlib.h/itoa
-static void reverse(char s[])
-{
-    int i, j;
-    char c;
-
-    for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
-        c = s[i];
-        s[i] = s[j];
-        s[j] = c;
-    }
-}
-
-
 // Convert integer (n) to a string (s).
 // From: http://en.wikibooks.org/wiki/C_Programming/C_Reference/stdlib.h/itoa
-static void itoa(int n, char s[])
+// This is a modified version. Because the length is already provided by `intlen`
+// the string doesn't have to be reversed and it can just start at the end postion
+// and work to the beginning.
+static void itoa(int n, char s[], int l)
 {
-    int i, sign;
+    int sign;
 
-    if ((sign = n) < 0)        // Record sign
+    s[l--] = '\0';             // Add \0 at last position
+
+    if ((sign = n) < 0) {      // Record sign
         n = -n;                // Make n positive
-    i = 0;
+        s[0] = '-';            // Add - at position 0
+    }
+
     do {                       // Generate digits in reverse order
-        s[i++] = n % 10 + '0'; // Get next digit
+        s[l--] = n % 10 + '0'; // Get next digit
     } while ((n /= 10) > 0);   // Delete it
-    if (sign < 0)
-        s[i++] = '-';
-    s[i] = '\0';
-    reverse(s);
 }
 
 
